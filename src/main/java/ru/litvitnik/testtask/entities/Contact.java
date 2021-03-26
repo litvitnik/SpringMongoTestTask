@@ -1,24 +1,24 @@
 package ru.litvitnik.testtask.entities;
 
+import org.springframework.data.annotation.Id;
+
 public class Contact {
-    private static long counter = 0;
-    private long id;
+    @Id
+    private String id;
+
     private String name;
     private String number;
+    private final String foreignKeyUserId;
 
-    public Contact(String name, String number){
-        this.id = counter++;
+    public Contact(String name, String number, String foreignKeyUserId){
         this.name = name;
         this.number = number;
+        this.foreignKeyUserId = foreignKeyUserId;
     }
-    public long getId() {
+
+    public String getId() {
         return id;
     }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
 
     public String getName() {
         return name;
@@ -35,4 +35,10 @@ public class Contact {
     public void setNumber(String number) {
         this.number = number;
     }
+
+    public String getForeignKeyUserId() {
+        return foreignKeyUserId;
+    }
+
+
 }
