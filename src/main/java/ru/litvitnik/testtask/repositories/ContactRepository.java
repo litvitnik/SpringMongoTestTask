@@ -13,4 +13,5 @@ public interface ContactRepository extends MongoRepository<Contact, String>{
     void removeById(String id);
     List<Contact> findAllByForeignKeyUserId(String id);
     List<Contact> findAllByNumber(String number);
+    List<Contact> findByNumberAndForeignKeyUserId(String number, String userId);
 }

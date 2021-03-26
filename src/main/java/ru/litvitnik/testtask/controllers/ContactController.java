@@ -3,9 +3,7 @@ package ru.litvitnik.testtask.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.litvitnik.testtask.entities.Contact;
-import ru.litvitnik.testtask.exceptions.NotFoundException;
 import ru.litvitnik.testtask.services.ContactService;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -35,11 +33,13 @@ public class ContactController {
     public void addContact(@RequestParam String name, @RequestParam String number, @RequestParam String owner){
         contactService.addContact(new Contact(name, number, owner));
     }
-    @PutMapping("contacts/{id}")
-    public void editContact(@PathVariable("id") String id, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
-        Contact oldContact = contactService.getContact(id);
-        newName.ifPresent(oldContact::setName);
-        newNumber.ifPresent(oldContact::setNumber);
-        contactService.addContact(oldContact);
+    @PatchMapping("contacts/{id}")
+    public Contact editContact(@PathVariable("id") String id, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
+        synchronized (this) {
+            Contact oldContact = contactService.getContact(id);
+            newName.ifPresent(oldContact::setName);
+            newNumber.ifPresent(oldContact::setNumber);
+            return contactService.addContact(oldContact);
+        }
     }
 }

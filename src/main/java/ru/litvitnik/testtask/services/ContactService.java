@@ -3,6 +3,7 @@ package ru.litvitnik.testtask.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.litvitnik.testtask.entities.Contact;
+import ru.litvitnik.testtask.exceptions.AlreadyPresentException;
 import ru.litvitnik.testtask.exceptions.NotFoundException;
 import ru.litvitnik.testtask.repositories.ContactRepository;
 import ru.litvitnik.testtask.repositories.UserRepository;
@@ -28,13 +29,15 @@ public class ContactService {
     public List<Contact> getContactsByNumber(String number){
         return contactRepository.findAllByNumber(number);
     }
-    public void addContact(Contact contact){
-        contactRepository.save(contact);
+    public Contact addContact(Contact newContact){
+        List<Contact> contacts = contactRepository.findAllByForeignKeyUserId(newContact.getForeignKeyUserId());
+        for(Contact contact : contacts){
+            if(contact.getName().equals(newContact.getName())) throw new AlreadyPresentException();
+            if(contact.getNumber().equals(newContact.getNumber())) throw new AlreadyPresentException();
+        }
+        return contactRepository.save(newContact);
     }
     public void deleteContact(String id){
         contactRepository.removeById(id);
-    }
-    public void editContact(Contact newOne){
-        contactRepository.save(newOne);
     }
 }

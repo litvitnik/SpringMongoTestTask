@@ -3,9 +3,9 @@ package ru.litvitnik.testtask.entities;
 import org.springframework.data.annotation.Id;
 
 public class Contact {
+
     @Id
     private String id;
-
     private String name;
     private String number;
     private final String foreignKeyUserId;

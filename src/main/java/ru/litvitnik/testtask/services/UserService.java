@@ -2,7 +2,6 @@ package ru.litvitnik.testtask.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import ru.litvitnik.testtask.entities.Contact;
 import ru.litvitnik.testtask.entities.User;
 import ru.litvitnik.testtask.exceptions.NotFoundException;
@@ -10,7 +9,6 @@ import ru.litvitnik.testtask.repositories.ContactRepository;
 import ru.litvitnik.testtask.repositories.UserRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -37,8 +35,8 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(NotFoundException::new);
     }
 
-    public void addUser(User user){
-        userRepository.save(user);
+    public User addUser(User user){
+        return userRepository.save(user);
     }
 
     public void deleteUser(String id){
@@ -47,5 +45,8 @@ public class UserService {
 
     public List<Contact> getContactsByUserId(String id){
         return contactRepository.findAllByForeignKeyUserId(id);
+    }
+    public List<Contact> getUsersContactByNumber(String id, String number){
+        return contactRepository.findByNumberAndForeignKeyUserId(id, number);
     }
 }
