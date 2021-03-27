@@ -1,6 +1,5 @@
 package ru.litvitnik.testtask.entities;
 
-import org.springframework.data.annotation.Id;
 
 import java.util.UUID;
 

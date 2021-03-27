@@ -2,10 +2,15 @@ package ru.litvitnik.testtask.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.litvitnik.testtask.entities.Contact;
+import ru.litvitnik.testtask.exceptions.IncorrectNameException;
+import ru.litvitnik.testtask.exceptions.IncorrectPhoneNumberException;
 import ru.litvitnik.testtask.services.UserService;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,7 +25,10 @@ public class ContactController {
 
     @GetMapping("users/{id}/contacts")
     public List<Contact> getContacts(@PathVariable String id, @RequestParam Optional<String> searchQuery){
-        if(searchQuery.isPresent()) return userService.getContactByNumber(id, searchQuery.get());
+        if(searchQuery.isPresent()){
+            if(searchQuery.get().length() > 100) throw new IncorrectNameException();
+            return userService.getContactByNumber(id, searchQuery.get());
+        }
         return userService.getUserContactList(id);
     }
     @GetMapping("users/{userId}/contacts/{contactId}")
@@ -34,11 +42,30 @@ public class ContactController {
     }
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("users/{userId}/contacts")
-    public void addContact(@PathVariable String userId, @RequestParam String name, @RequestParam String number){
+    public ResponseEntity<Void> addContact(@PathVariable String userId,
+                                          @RequestParam String name,
+                                          @RequestParam String number){
+        if(name.length() > 100) throw new IncorrectNameException();
+        if(!number.matches("\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n"))
+            throw new IncorrectPhoneNumberException();
+        Contact newContact = new Contact(name, number);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newContact.getId())
+                .toUri();
         userService.addContact(userId, new Contact(name, number));
+        return ResponseEntity.created(location).build();
     }
-    @PatchMapping("users/{userId}/contacts/{contactId}")
-    public Contact editContact(@PathVariable String userId, @PathVariable String contactId, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
-        return userService.editContact(userId, contactId, newName, newNumber);
+    @PutMapping("users/{userId}/contacts/{contactId}")
+    public void editContact(@PathVariable String userId, @PathVariable String contactId, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
+        if(newName.isPresent()){
+            if(newName.get().length() > 100) throw new IncorrectNameException();
+        }
+        if(newNumber.isPresent()){
+            if(!newNumber.get().matches("\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n"))
+                throw new IncorrectPhoneNumberException();
+        }
+        userService.editContact(userId, contactId, newName, newNumber);
     }
 }

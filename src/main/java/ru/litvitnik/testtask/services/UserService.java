@@ -34,14 +34,19 @@ public class UserService {
         throw new NotFoundException();
     }
 
-    public User addUser(User user){
-        return userRepository.save(user);
+    public String addUser(User user){
+        return userRepository.save(user).getId();
     }
 
     public void deleteUser(String id){
         Optional<User> optionalUser = userRepository.findById(id);
         if(optionalUser.isPresent())userRepository.deleteById(id);
         else throw new NotFoundException();
+    }
+    public void editUser(String userId, String newName){
+        User old = this.getUser(userId);
+        old.setName(newName);
+        userRepository.save(old);
     }
 
     public List<Contact> getUserContactList(String id){
@@ -76,7 +81,7 @@ public class UserService {
         user.setContactList(contacts);
         userRepository.save(user);
     }
-    public Contact editContact(String userId, String contactId, Optional<String> newName, Optional<String> newNumber){
+    public void editContact(String userId, String contactId, Optional<String> newName, Optional<String> newNumber){
         User user = this.getUser(userId);
         List<Contact> contacts = user.getContactList();
         Contact contact = this.getOneContact(userId, contactId);
@@ -85,7 +90,6 @@ public class UserService {
         newNumber.ifPresent(contacts.get(modifyingIndex)::setNumber);
         user.setContactList(contacts);
         userRepository.save(user);
-        return this.getOneContact(userId, contactId);
     }
     public List<Contact> getContactByNumber(String userId, String number){
         return List.of(this.getUserContactList(userId)
