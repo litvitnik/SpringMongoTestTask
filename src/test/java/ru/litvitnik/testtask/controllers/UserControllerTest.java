@@ -1,10 +1,35 @@
 package ru.litvitnik.testtask.controllers;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
 class UserControllerTest {
+    @Autowired
+    private MockMvc mockMvc;
+
+
+    @Test
+    public void getAllUsersShouldReturnOkStatus() throws Exception {
+        this.mockMvc.perform(get("/users")).andDo(print()).andExpect(status().isOk());
+    }
+    @Test
+    public void postIsWorkingFine() throws Exception{
+        this.mockMvc.perform(post("/users?name=VeryVeryTestName")).andExpect(status().is(HttpStatus.CREATED.value()));
+    }
 
     @Test
     void setUserService() {

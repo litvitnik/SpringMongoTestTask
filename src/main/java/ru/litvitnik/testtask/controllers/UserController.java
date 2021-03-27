@@ -19,6 +19,7 @@ public class UserController {
 
     @GetMapping("users")
     public List<User> getUsers(@RequestParam Optional<String> searchQuery){
+        if(searchQuery.isPresent()) return userService.getUsersMatching(searchQuery.get());
         return userService.getUsers();
     }
     @GetMapping("users/{id}")
@@ -46,7 +47,5 @@ public class UserController {
             return userService.addUser(oldUser);
         }
     }
-
-
 
 }

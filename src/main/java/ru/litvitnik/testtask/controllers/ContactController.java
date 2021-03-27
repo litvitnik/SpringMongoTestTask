@@ -20,6 +20,7 @@ public class ContactController {
 
     @GetMapping("users/{id}/contacts")
     public List<Contact> getContacts(@PathVariable String id, @RequestParam Optional<String> searchQuery){
+        if(searchQuery.isPresent()) return userService.getContactByNumber(id, searchQuery.get());
         return userService.getUserContactList(id);
     }
     @GetMapping("users/{userId}/contacts/{contactId}")

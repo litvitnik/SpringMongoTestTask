@@ -22,6 +22,9 @@ public class UserService {
     public List<User> getUsers(){
         return userRepository.findAll();
     }
+    public List<User> getUsersMatching(String namePart){
+        return userRepository.findAllByNameContains(namePart);
+    }
 
     public User getUser(String id){
         Optional<User> optionalUser = userRepository.findById(id);
@@ -83,5 +86,12 @@ public class UserService {
         user.setContactList(contacts);
         userRepository.save(user);
         return this.getOneContact(userId, contactId);
+    }
+    public List<Contact> getContactByNumber(String userId, String number){
+        return List.of(this.getUserContactList(userId)
+                .stream()
+                .filter(contact -> contact.getNumber().equals(number))
+                .findAny()
+                .orElseThrow(NotFoundException::new));
     }
 }
