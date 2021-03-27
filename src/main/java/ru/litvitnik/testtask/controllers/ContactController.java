@@ -10,8 +10,6 @@ import ru.litvitnik.testtask.entities.Contact;
 import ru.litvitnik.testtask.exceptions.IncorrectNameException;
 import ru.litvitnik.testtask.exceptions.IncorrectPhoneNumberException;
 import ru.litvitnik.testtask.services.UserService;
-
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
