@@ -69,7 +69,7 @@ public class UserService {
         List<Contact> contacts = user.getContactList();
         if (!contacts.removeIf(contact -> contact.getId().equals(contactId))) throw new NotFoundException();
     }
-    public void addContact(String userId, Contact newContact){
+    public String addContact(String userId, Contact newContact){
         User user = this.getUser(userId);
         List<Contact> contacts = user.getContactList();
         if(contacts.stream()
@@ -79,7 +79,7 @@ public class UserService {
                 )) throw new AlreadyPresentException();
         contacts.add(newContact);
         user.setContactList(contacts);
-        userRepository.save(user);
+        return userRepository.save(user).getId();
     }
     public void editContact(String userId, String contactId, Optional<String> newName, Optional<String> newNumber){
         User user = this.getUser(userId);

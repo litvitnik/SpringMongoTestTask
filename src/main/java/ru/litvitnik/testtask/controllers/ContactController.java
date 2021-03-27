@@ -1,6 +1,7 @@
 package ru.litvitnik.testtask.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,14 +49,15 @@ public class ContactController {
         if(name.length() > 100) throw new IncorrectNameException();
         if(!number.matches("\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n"))
             throw new IncorrectPhoneNumberException();
-        Contact newContact = new Contact(name, number);
-        URI location = ServletUriComponentsBuilder
+        String resultId = userService.addContact(userId, new Contact(name, number));
+        String location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(newContact.getId())
-                .toUri();
-        userService.addContact(userId, new Contact(name, number));
-        return ResponseEntity.created(location).build();
+                .buildAndExpand(resultId)
+                .toUriString();
+        location = location.substring(location.indexOf("/contacts"));
+        return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.LOCATION, location.split("\\?")[0]).build();
+
     }
     @PutMapping("users/{userId}/contacts/{contactId}")
     public void editContact(@PathVariable String userId, @PathVariable String contactId, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){

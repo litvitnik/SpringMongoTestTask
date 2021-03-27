@@ -44,6 +44,7 @@ public class UserController {
                 .path("/{id}")
                 .buildAndExpand(resultId)
                 .toUriString();
+        location = location.substring(location.indexOf("/users"));
         return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.LOCATION, location.split("\\?")[0]).build();
     }
 
