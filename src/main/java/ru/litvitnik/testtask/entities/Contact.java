@@ -2,20 +2,22 @@ package ru.litvitnik.testtask.entities;
 
 import org.springframework.data.annotation.Id;
 
+import java.util.UUID;
+
 public class Contact {
 
-    @Id
     private String id;
     private String name;
     private String number;
-    private final String foreignKeyUserId;
 
-    public Contact(String name, String number, String foreignKeyUserId){
+    public Contact(String name, String number){
+        this.id = UUID.randomUUID().toString();
         this.name = name;
         this.number = number;
-        this.foreignKeyUserId = foreignKeyUserId;
     }
-
+    public void setId(String id){
+        this.id = id;
+    }
     public String getId() {
         return id;
     }
@@ -36,9 +38,6 @@ public class Contact {
         this.number = number;
     }
 
-    public String getForeignKeyUserId() {
-        return foreignKeyUserId;
-    }
 
 
 }

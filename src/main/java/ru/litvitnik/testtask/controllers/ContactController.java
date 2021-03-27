@@ -1,45 +1,43 @@
 package ru.litvitnik.testtask.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.litvitnik.testtask.entities.Contact;
-import ru.litvitnik.testtask.services.ContactService;
+import ru.litvitnik.testtask.services.UserService;
+
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 public class ContactController {
 
-    public ContactService contactService;
+    public UserService userService;
     @Autowired
-    public void setContactService(ContactService contactService){
-        this.contactService = contactService;
+    public void setUserService(UserService userService){
+        this.userService = userService;
     }
 
-    @GetMapping("contacts")
-    public List<Contact> getContacts(@RequestParam Optional<String> searchQuery){
-        if(searchQuery.isPresent()) return contactService.getContactsByNumber(searchQuery.get());
-        return contactService.getContacts();
+    @GetMapping("users/{id}/contacts")
+    public List<Contact> getContacts(@PathVariable String id, @RequestParam Optional<String> searchQuery){
+        return userService.getUserContactList(id);
     }
-    @GetMapping("contacts/{id}")
-    public Contact getOneContact(@PathVariable String id){
-        return contactService.getContact(id);
+    @GetMapping("users/{userId}/contacts/{contactId}")
+    public Contact getOneContact(@PathVariable String userId, @PathVariable String contactId){
+        return userService.getOneContact(userId, contactId);
     }
-    @DeleteMapping("contacts/{id}")
-    public void deleteContact(@PathVariable String id){
-        contactService.deleteContact(id);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("users/{userId}/contacts/{contactId}")
+    public void deleteContact(@PathVariable String userId, @PathVariable String contactId){
+        userService.deleteContact(userId, contactId);
     }
-    @PostMapping("contacts")
-    public void addContact(@RequestParam String name, @RequestParam String number, @RequestParam String owner){
-        contactService.addContact(new Contact(name, number, owner));
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("users/{userId}/contacts")
+    public void addContact(@PathVariable String userId, @RequestParam String name, @RequestParam String number){
+        userService.addContact(userId, new Contact(name, number));
     }
-    @PatchMapping("contacts/{id}")
-    public Contact editContact(@PathVariable("id") String id, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
-        synchronized (this) {
-            Contact oldContact = contactService.getContact(id);
-            newName.ifPresent(oldContact::setName);
-            newNumber.ifPresent(oldContact::setNumber);
-            return contactService.addContact(oldContact);
-        }
+    @PatchMapping("users/{userId}/contacts/{contactId}")
+    public Contact editContact(@PathVariable String userId, @PathVariable String contactId, @RequestParam Optional<String> newName, @RequestParam Optional<String> newNumber){
+        return userService.editContact(userId, contactId, newName, newNumber);
     }
 }
