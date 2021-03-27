@@ -37,7 +37,7 @@ public class UserController {
 
     @PostMapping("users")
     public ResponseEntity<String> addUser(@RequestParam String name){
-        if(name.length() > 100) throw new IncorrectNameException();
+        if(name.length() > 100 || name.length() < 1) throw new IncorrectNameException();
         String resultId = userService.addUser(new User(name));
         String location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

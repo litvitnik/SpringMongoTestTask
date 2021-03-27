@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
-import ru.litvitnik.testtask.entities.User;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -71,6 +71,26 @@ class UserControllerTest {
                 .getResponse()
                 .getContentAsString(), UserProjection.class);
         assertEquals(newUser.name, "VeryNewTestEntity");
+    }
+    @Test
+    public void getUserShouldReturn404WhenUserNotExists() throws Exception{
+       int status = mockMvc.perform(MockMvcRequestBuilders.get("/users/-1")
+                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andReturn()
+               .getResponse()
+               .getStatus();
+       assertEquals(404, status);
+    }
+    @Test
+    public void incorrectLengthShouldReturn422() throws Exception{
+        String weirdName = "BugaVugaOOBugaVugaOOBugaVugaOOBugaVugaOO" +
+                "BugaVugaOOBugaVugaOOBugaVugaOOBugaVugaOOBugaVugaOOBugaVugaOOBugaVugaOO";
+        int status = mockMvc
+                .perform(post("/users?name=" + weirdName).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn()
+                .getResponse()
+                .getStatus();
+        assertEquals(422, status);
     }
 }
 class UserProjection{
