@@ -15,6 +15,7 @@ import java.util.Optional;
 
 @RestController
 public class ContactController {
+    String phoneRegex = "\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n";
 
     public UserService userService;
     @Autowired
@@ -22,14 +23,15 @@ public class ContactController {
         this.userService = userService;
     }
 
-    @GetMapping("users/{id}/contacts")
-    public List<Contact> getContacts(@PathVariable String id, @RequestParam Optional<String> searchQuery){
+    @GetMapping("users/{userId}/contacts")
+    public List<Contact> getContacts(@PathVariable String userId, @RequestParam Optional<String> searchQuery){
         if(searchQuery.isPresent()){
             if(searchQuery.get().length() > 100) throw new IncorrectNameException();
-            return userService.getContactByNumber(id, searchQuery.get());
+            return userService.getContactByNumber(userId, searchQuery.get());
         }
-        return userService.getUserContactList(id);
+        return userService.getUserContactList(userId);
     }
+
     @GetMapping("users/{userId}/contacts/{contactId}")
     public Contact getOneContact(@PathVariable String userId, @PathVariable String contactId){
         return userService.getOneContact(userId, contactId);
@@ -45,7 +47,7 @@ public class ContactController {
                                           @RequestParam String name,
                                           @RequestParam String number){
         if(name.length() > 100) throw new IncorrectNameException();
-        if(!number.matches("\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n"))
+        if(!number.matches(phoneRegex))
             throw new IncorrectPhoneNumberException();
         String resultId = userService.addContact(userId, new Contact(name, number));
         String location = ServletUriComponentsBuilder
@@ -54,7 +56,10 @@ public class ContactController {
                 .buildAndExpand(resultId)
                 .toUriString();
         location = location.substring(location.indexOf("/contacts"));
-        return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.LOCATION, location.split("\\?")[0]).build();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .header(HttpHeaders.LOCATION, location.split("\\?")[0])
+                .build();
 
     }
     @PutMapping("users/{userId}/contacts/{contactId}")
@@ -63,7 +68,7 @@ public class ContactController {
             if(newName.get().length() > 100) throw new IncorrectNameException();
         }
         if(newNumber.isPresent()){
-            if(!newNumber.get().matches("\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n"))
+            if(!newNumber.get().matches(phoneRegex))
                 throw new IncorrectPhoneNumberException();
         }
         userService.editContact(userId, contactId, newName, newNumber);

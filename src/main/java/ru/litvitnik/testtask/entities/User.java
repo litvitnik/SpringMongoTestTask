@@ -24,9 +24,6 @@ public class User {
         this.name = name;
         this.contactList = new ArrayList<>();
     }
-    public void fakeContact(){
-        this.contactList.add(new Contact("Dad", "890"));
-    }
     public void setName(String name) {
         this.name = name;
     }

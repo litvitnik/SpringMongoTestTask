@@ -48,13 +48,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.LOCATION, location.split("\\?")[0]).build();
     }
 
-    @DeleteMapping("users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("users/{id}")
     public void deleteUser(@PathVariable("id") String id){
         userService.deleteUser(id);
     }
 
     @PutMapping("users/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void editUser(@PathVariable("id") String id, @RequestParam String newName){
         if(newName.length() > 100) throw new IncorrectNameException();
         userService.editUser(id, newName);

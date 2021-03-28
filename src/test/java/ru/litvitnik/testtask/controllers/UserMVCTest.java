@@ -31,8 +31,75 @@ class UserMVCTest {
 
     /*
     Итоговое покрытие:
-
-     */
+    + Получение всех пользователей
+        + статус код
+        + возвращает корректный результат
+    + Создание пользователя
+        + статус код
+        + создает пользователя корректно
+        + Возвращает ошибку если имя пользователя слишком длинное
+    + Редактирование пользователя
+        + статус код
+        + выполняет редактирование
+        + возвращает ошибку если длина невалидна
+        + возвращает 404 на несуществующем пользователе
+    + Получение одного пользователя
+        + статус код
+        + реально возвращает пользователя
+    + Поиск пользователя
+        + статус код
+        + возвращает пользователей в нужном порядке(самый первый - полное совпадение, остальные по возрастанию длины)
+    + Удаление пользователя
+        + статус код
+        + реально удаляет пользователя
+    */
+    @Test
+    public void deleteUser() throws Exception{
+        String postUri = "/users?name=VeryVeryTestUser";
+        MvcResult mvcResult = mockMvc
+                .perform(post(postUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String location = mvcResult.getResponse().getHeader("Location");
+        assertNotNull(location, "post is not working properly so im failed");
+        mvcResult = mockMvc
+                .perform(delete(location).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        assertEquals(
+                204,
+                mvcResult.getResponse().getStatus(),
+                "Deleting should return 204 status code");
+        mvcResult = mockMvc
+                .perform(get(location).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        assertEquals(
+                404,
+                mvcResult.getResponse().getStatus(),
+                "User is not deleted because i still can access it");
+    }
+    @Test
+    public void getOneUser() throws Exception{
+        ObjectMapper objectMapper = new ObjectMapper();
+        String postUri = "/users?name=VeryVeryTestUser";
+        MvcResult mvcResult = mockMvc
+                .perform(post(postUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String location = mvcResult.getResponse().getHeader("Location");
+        assertNotNull(location, "post is not working properly so im failed");
+        mvcResult = mockMvc
+                .perform(get(location).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        assertEquals(
+                200,
+                mvcResult.getResponse().getStatus(),
+                "Status code should be 200");
+        UserProjection receivedUser = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                UserProjection.class);
+        assertEquals(
+                receivedUser.name,
+                "VeryVeryTestUser",
+                "Looks like you've returned wrong user");
+    }
 
     @Test
     public void getAllUsers() throws Exception{
@@ -61,6 +128,10 @@ class UserMVCTest {
         MvcResult mvcResult = mockMvc
                 .perform(get(searchQuery).contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
+        assertEquals(
+                200,
+                mvcResult.getResponse().getStatus(),
+                "Successful search should return OK status");
         List<UserProjection> actual = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
                 new TypeReference<>() {
@@ -83,16 +154,22 @@ class UserMVCTest {
     public void editUser() throws Exception{
         ObjectMapper objectMapper = new ObjectMapper();
         String uri = "/users?name=VeryVeryTestUser";
+        String weirdNameChange = "LongEnoughLongEnoughLongEnoughLongEnoughLongEnough"
+                + "LongEnoughLongEnoughLongEnoughLongEnoughLongEnoughLongEnough";
         MvcResult mvcResult = mockMvc
                 .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
         String location = mvcResult.getResponse().getHeader("Location");
         assertNotNull(location, "remember that post should return location of new entity");
         mockMvc.perform(get(location).contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
-        mockMvc
+        mvcResult = mockMvc
                 .perform(put(location + "?newName=VeryNewTestEntity")
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
+        assertEquals(
+                204,
+                mvcResult.getResponse().getStatus(),
+                "Successful edit should return 204 NO_CONTENT");
         mvcResult = mockMvc
                 .perform(get(location)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -100,7 +177,19 @@ class UserMVCTest {
         UserProjection newUser = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
                 UserProjection.class);
-        assertEquals(newUser.name, "VeryNewTestEntity");
+        assertEquals(
+                newUser.name,
+                "VeryNewTestEntity",
+                "Edit is not successful or get method is not working fine. Check both");
+        mvcResult = mockMvc
+                .perform(put(location + "?newName=" + weirdNameChange)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        assertEquals(
+                422,
+                mvcResult.getResponse().getStatus(),
+                "Editing with new name length over limit should result in 422 status code");
+
     }
     @Test
     public void editingNonExistingUserShouldReturn400() throws Exception{
@@ -135,7 +224,6 @@ class UserMVCTest {
                 .getStatus();
         assertEquals(422, status, "length over 100 is prohibited");
     }
-}
 /*
 Предупреждения заглушены по той причине, что IDEA не видит десериализацию JSON в проекцию и не воспринимает
 это как использование конструкторов.
@@ -144,13 +232,14 @@ class UserMVCTest {
 список контактов потому что получение списка пользователей не должно возвращать список их контактов так же
 как и получения списка друзей ВК не должно загружать их записи или тем более личные сообщения
  */
-@SuppressWarnings("unused")
-class UserProjection{
-    public String id;
-    public String name;
-    public UserProjection(String id, String name){
-        this.id = id;
-        this.name = name;
+    @SuppressWarnings("unused")
+    static class UserProjection{
+        public String id;
+        public String name;
+        public UserProjection(String id, String name){
+            this.id = id;
+            this.name = name;
+        }
+        public UserProjection(){}
     }
-    public UserProjection(){}
 }

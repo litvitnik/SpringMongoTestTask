@@ -6,12 +6,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-//import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-
 
 @SpringBootApplication
 @EnableMongoRepositories
-//@EnableJpaRepositories("ru.litvitnik.testtask.repositories")
+
 public class TesttaskApplication {
 
 	public static void main(String[] args) {
@@ -22,3 +20,5 @@ public class TesttaskApplication {
 		return new MongoTransactionManager(dbFactory);
 	}
 }
+
+
