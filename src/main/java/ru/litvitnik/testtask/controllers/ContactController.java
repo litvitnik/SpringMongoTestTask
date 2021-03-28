@@ -15,7 +15,8 @@ import java.util.Optional;
 
 @RestController
 public class ContactController {
-    String phoneRegex = "\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n";
+    String phoneRegex = "^[0-9\\-]{9,15}";
+            //"\\(?\\+[0-9]{1,3}\\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5} ?-?[0-9]{4}( ?-?[0-9]{3})? ?(\\w{1,10}\\s?\\d{1,6})?\n";
 
     public UserService userService;
     @Autowired
@@ -49,13 +50,14 @@ public class ContactController {
         if(name.length() > 100) throw new IncorrectNameException();
         if(!number.matches(phoneRegex))
             throw new IncorrectPhoneNumberException();
-        String resultId = userService.addContact(userId, new Contact(name, number));
+        Contact newContact = new Contact(name, number);
+        String resultId = userService.addContact(userId, newContact);
         String location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(resultId)
                 .toUriString();
-        location = location.substring(location.indexOf("/contacts"));
+        location = "/contacts/" + newContact.getId();
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .header(HttpHeaders.LOCATION, location.split("\\?")[0])

@@ -13,6 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import ru.litvitnik.testtask.entities.Contact;
+
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -70,22 +72,43 @@ public class ContactMVCTest {
      */
     @Test
     public void addContact() throws Exception{
+        ObjectMapper objectMapper = new ObjectMapper();
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
                 .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
-        String location = mvcResult.getResponse().getHeader("Location");
-        System.out.println(location);
-        assertNotNull(location, "addUser is not working fine so im failed");
-        String contactUri = location + "/contacts?name=Granny&number=89992416424";
+        String userLocation = mvcResult.getResponse().getHeader("Location");
+        System.out.println(userLocation);
+        assertNotNull(userLocation, "addUser is not working fine so im failed");
+        String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mvcResult = mockMvc
                 .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
         assertEquals(
                 201,
                 mvcResult.getResponse().getStatus(),
-                "Adding new user should return 201 status");
-
+                "Adding new user should result in 201 status");
+        String contactLocation = mvcResult.getResponse().getHeader("Location");
+        assertNotNull(contactLocation, "Location header is necessary");
+        String newContactAddress = userLocation + contactLocation;
+        mvcResult = mockMvc
+                .perform(get(newContactAddress).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        assertEquals(
+                200,
+                mvcResult.getResponse().getStatus(),
+                "Getting added contact should return 200 status code");
+        ContactProjection newContact = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                ContactProjection.class);
+        assertEquals(
+                "Granny",
+                newContact.name,
+                "Recieved wrong contact by given id");
+        assertEquals(
+                "89992416424",
+                newContact.number,
+                "Recieved wrong contact by given id");
     }
     @Test
     public void getContacts() throws Exception{
@@ -113,5 +136,19 @@ public class ContactMVCTest {
     @Test
     public void searchContact() throws Exception{
 
+    }
+    //Suppressed because of the same reason as in UserMVCTest
+    @SuppressWarnings("unused")
+    static class ContactProjection{
+        public String id;
+        public String name;
+        public String number;
+        public ContactProjection(){
+        }
+        public ContactProjection(String id, String name, String number){
+            this.id = id;
+            this.name = name;
+            this.number = number;
+        }
     }
 }
