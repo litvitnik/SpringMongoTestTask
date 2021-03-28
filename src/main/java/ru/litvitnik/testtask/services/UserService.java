@@ -7,6 +7,8 @@ import ru.litvitnik.testtask.entities.User;
 import ru.litvitnik.testtask.exceptions.AlreadyPresentException;
 import ru.litvitnik.testtask.exceptions.NotFoundException;
 import ru.litvitnik.testtask.repositories.UserRepository;
+
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +25,9 @@ public class UserService {
         return userRepository.findAll();
     }
     public List<User> getUsersMatching(String namePart){
-        return userRepository.findAllByNameContains(namePart);
+        List<User> usersMatching = userRepository.findAllByNameContains(namePart);
+        usersMatching.sort(Comparator.comparing(user -> user.getName().length()));
+        return usersMatching;
     }
 
     public User getUser(String id){
