@@ -14,10 +14,6 @@ public class Contact {
         this.name = name;
         this.number = number;
     }
-
-    public void setId(String id){
-        this.id = id;
-    }
     public String getId() {
         return id;
     }
