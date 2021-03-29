@@ -72,6 +72,7 @@ public class UserService {
         User user = this.getUser(userId);
         List<Contact> contacts = user.getContactList();
         if (!contacts.removeIf(contact -> contact.getId().equals(contactId))) throw new NotFoundException();
+        userRepository.save(user);
     }
     public String addContact(String userId, Contact newContact){
         User user = this.getUser(userId);
@@ -88,8 +89,11 @@ public class UserService {
     public void editContact(String userId, String contactId, Optional<String> newName, Optional<String> newNumber){
         User user = this.getUser(userId);
         List<Contact> contacts = user.getContactList();
-        Contact contact = this.getOneContact(userId, contactId);
-        int modifyingIndex = contacts.indexOf(contact);
+        int modifyingIndex = -1;
+        for(int i = 0; i < contacts.size(); i++){
+            if(contacts.get(i).getId().equals(contactId)) modifyingIndex = i;
+        }
+        if(modifyingIndex == -1) throw new NotFoundException();
         newName.ifPresent(contacts.get(modifyingIndex)::setName);
         newNumber.ifPresent(contacts.get(modifyingIndex)::setNumber);
         user.setContactList(contacts);
