@@ -5,7 +5,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import ru.litvitnik.testtask.entities.Contact;
+import ru.litvitnik.testtask.exceptions.EmptyArgumentsException;
 import ru.litvitnik.testtask.exceptions.IncorrectNameException;
 import ru.litvitnik.testtask.exceptions.IncorrectPhoneNumberException;
 import ru.litvitnik.testtask.services.UserService;
@@ -63,6 +65,7 @@ public class ContactController {
         if(newName.isPresent()){
             if(newName.get().length() > 100) throw new IncorrectNameException();
         }
+        if(newName.isEmpty() && newNumber.isEmpty()) throw new EmptyArgumentsException();
         if(newNumber.isPresent()){
             if(!newNumber.get().matches(phoneRegex))
                 throw new IncorrectPhoneNumberException();

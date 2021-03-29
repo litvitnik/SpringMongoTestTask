@@ -290,8 +290,6 @@ public class ContactMVCTest {
         String userLocation = mvcResult.getResponse().getHeader("Location");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mockMvc.perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
-        String contactUri2 = userLocation + "/contacts?name=GrannyTheSecond&number=893324566775";
-        mockMvc.perform(post(contactUri2).contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
         mvcResult = mockMvc
                 .perform(get(userLocation + "/contacts?searchQuery=89992416424").contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -303,7 +301,7 @@ public class ContactMVCTest {
         assertEquals(
                 actual.get(0).name,
                 "Granny",
-                "full match should be the first in matching list");
+                "you've returned something wrong");
     }
     //Suppressed because of the same reason as in UserMVCTest
     @SuppressWarnings("unused")
