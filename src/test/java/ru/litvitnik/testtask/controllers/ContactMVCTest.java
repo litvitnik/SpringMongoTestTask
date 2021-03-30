@@ -1,7 +1,5 @@
 package ru.litvitnik.testtask.controllers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,11 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,52 +56,32 @@ public class ContactMVCTest {
 
     @Test
     public void addContact() throws Exception{
-        ObjectMapper objectMapper = new ObjectMapper();
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
+                .andExpect(status().is(201))
+                .andExpect(header().exists("Location"))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
         assertNotNull(userLocation, "addUser is not working fine so im failed");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(contactUri))
+                .andExpect(status().is(201))
                 .andReturn();
-        assertEquals(
-                201,
-                mvcResult.getResponse().getStatus(),
-                "Adding new contact should result in 201 status");
         String contactLocation = mvcResult.getResponse().getHeader("Location");
-        assertNotNull(contactLocation, "Location header is necessary");
-        mvcResult = mockMvc
-                .perform(get(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                200,
-                mvcResult.getResponse().getStatus(),
-                "Getting added contact should return 200 status code");
-        ContactProjection newContact = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                ContactProjection.class);
-        assertEquals(
-                "Granny",
-                newContact.name,
-                "Recieved wrong contact by given id");
-        assertEquals(
-                "89992416424",
-                newContact.number,
-                "Received wrong contact by given id");
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.name", is("Granny")))
+                .andExpect(jsonPath("$.number", is("89992416424")));
     }
     @Test
     public void addContactToNonExistingUser() throws Exception{
         String contactUri = "/users/-1/contacts?name=WhoCaresWhatIsHere&number=89348765544";
-        MvcResult mvcResult = mockMvc
+        mockMvc
                 .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                404,
-                mvcResult.getResponse().getStatus(),
-                "adding contact to non-existing user should return 404");
+                .andExpect(status().is(404));
     }
     @Test
     public void addWrongName() throws Exception{
@@ -110,211 +89,138 @@ public class ContactMVCTest {
                 "GrannyManyGrannyManyGrannyManyGrannyManyGrannyManyGrannyMany";
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
-        assertNotNull(userLocation, "addUser is not working fine so im failed");
         String contactUri = userLocation + "/contacts?name=" + weirdName + "&number=89992416424";
-        mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                422,
-                mvcResult.getResponse().getStatus(),
-                "Adding incorrect contact name should return UNPROCESSABLE_ENTITY");
+        mockMvc
+                .perform(post(contactUri))
+                .andExpect(status().is(422));
+        mockMvc
+                .perform(get(userLocation))
+                .andExpect(jsonPath("$.name", is("VeryVeryTestUser")));
     }
     @Test
     public void addWrongNumber() throws Exception{
-        String weirdNumber = "im not even a number lol";
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
-        assertNotNull(userLocation, "addUser is not working fine so im failed");
-        String contactUri = userLocation + "/contacts?name=Granny&number=" + weirdNumber;
-        mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                422,
-                mvcResult.getResponse().getStatus(),
-                "Adding incorrect contact number should return UNPROCESSABLE_ENTITY");
+        String wrongNumber = userLocation + "/contacts?name=Granny&number=ImNotEvenANumber";
+        mockMvc
+                .perform(post(wrongNumber))
+                .andExpect(status().is(422));
     }
     @Test
     public void getContacts() throws Exception{
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String location = mvcResult.getResponse().getHeader("Location");
-        assertNotNull(location, "addUser is not working fine so im failed");
-        mockMvc.perform(get(location + "/contacts")).andDo(print()).andExpect(status().isOk());
+        mockMvc
+                .perform(get(location + "/contacts"))
+                .andExpect(status().isOk());
     }
     @Test
     public void getOneContact() throws Exception{
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
-        System.out.println(userLocation);
-        assertNotNull(userLocation, "addUser is not working fine so im failed");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(contactUri))
+                .andExpect(status().is(201))
                 .andReturn();
-        assertEquals(
-                201,
-                mvcResult.getResponse().getStatus(),
-                "Adding new user should result in 201 status");
         String contactLocation = mvcResult.getResponse().getHeader("Location");
-        assertNotNull(contactLocation, "Location header is necessary");
-        mvcResult = mockMvc
-                .perform(get(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                200,
-                mvcResult.getResponse().getStatus(),
-                "Getting added contact should return 200 status code");
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.name", is("Granny")))
+                .andExpect(jsonPath("$.number", is("89992416424")));
     }
 
     @Test
     public void editContact() throws Exception{
-        ObjectMapper objectMapper = new ObjectMapper();
         String uri = "/users?name=VeryVeryTestUser";
         String weirdName = "GrannyManyGrannyManyGrannyManyGrannyManyGrannyMany" +
                 "GrannyManyGrannyManyGrannyManyGrannyManyGrannyManyGrannyMany";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(contactUri))
                 .andReturn();
         String contactLocation = mvcResult.getResponse().getHeader("Location");
-        System.out.println(contactLocation);
-        assertNotNull(contactLocation, "post didn't work");
         String tryingToEditNonExisting = userLocation + "/contacts/-1?newName=anything";
-        mvcResult = mockMvc
-                .perform(put(tryingToEditNonExisting).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                404,
-                mvcResult.getResponse().getStatus(),
-                "editing non existing contact should return 404 status code");
+        mockMvc
+                .perform(put(tryingToEditNonExisting))
+                .andExpect(status().is(404));
         String wrongPut1 = contactLocation + "?newName=" + weirdName;
         String wrongPut2 = contactLocation + "?newNumber=ImNotEvenANumberLol";
-        mvcResult = mockMvc
-                .perform(put(wrongPut1).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                422,
-                mvcResult.getResponse().getStatus(),
-                "too long name should not be put");
-        mvcResult = mockMvc
-                .perform(put(wrongPut2).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                422,
-                mvcResult.getResponse().getStatus(),
-                "bad number name should not be put");
+        mockMvc
+                .perform(put(wrongPut1))
+                .andExpect(status().is(422));
+        mockMvc
+                .perform(put(wrongPut2))
+                .andExpect(status().is(422));
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(jsonPath("$.name", is("Granny")))
+                .andExpect(jsonPath("$.number", is("89992416424")));
         String goodPut = contactLocation + "?newName=noLongerGranny";
-        mvcResult = mockMvc
-                .perform(put(goodPut).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                204,
-                mvcResult.getResponse().getStatus(),
-                "good put should return 204 status code");
-        mvcResult = mockMvc
-                .perform(get(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        ContactProjection newContact = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                ContactProjection.class);
-        assertEquals(
-                "noLongerGranny",
-                newContact.name,
-                "edit didn't happen");
+        mockMvc
+                .perform(put(goodPut))
+                .andExpect(status().is(204));
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(jsonPath("$.name", is("noLongerGranny")));
     }
     @Test
     public void deleteContact() throws Exception{
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
-        System.out.println(userLocation);
         assertNotNull(userLocation, "addUser is not working fine so im failed");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
         mvcResult = mockMvc
-                .perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(contactUri))
+                .andExpect(status().is(201))
                 .andReturn();
-        assertEquals(
-                201,
-                mvcResult.getResponse().getStatus(),
-                "Seems like contact is not created or status code is not returned");
         String contactLocation = mvcResult.getResponse().getHeader("Location");
         assertNotNull(contactLocation, "Location header is necessary to farther actions");
-        mvcResult = mockMvc
-                .perform(get(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(status().is(200))
                 .andReturn();
-        assertEquals(
-                200,
-                mvcResult.getResponse().getStatus(),
-                "Contact is not created so im failed");
-        mvcResult = mockMvc
-                .perform(delete(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
+        mockMvc
+                .perform(delete(contactLocation))
+                .andExpect(status().is(204))
                 .andReturn();
-        assertEquals(
-                204,
-                mvcResult.getResponse().getStatus(),
-                "NO_CONTENT code expected, make sure deleteMapping is working properly");
-        mvcResult = mockMvc
-                .perform(get(contactLocation).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        assertEquals(
-                404,
-                mvcResult.getResponse().getStatus(),
-                "contact is still present");
+        mockMvc
+                .perform(get(contactLocation))
+                .andExpect(status().is(404));
     }
     @Test
     public void searchContact() throws Exception{
-        ObjectMapper objectMapper = new ObjectMapper();
         String uri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(uri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(uri))
                 .andReturn();
         String userLocation = mvcResult.getResponse().getHeader("Location");
         String contactUri = userLocation + "/contacts?name=Granny&number=89992416424";
-        mockMvc.perform(post(contactUri).contentType(MediaType.APPLICATION_JSON_VALUE)).andReturn();
-        mvcResult = mockMvc
-                .perform(get(userLocation + "/contacts?searchQuery=89992416424").contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-        List<ContactProjection> actual = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-        assertTrue(actual.size() > 0, "search is not working at all");
-        assertEquals(
-                actual.get(0).name,
-                "Granny",
-                "you've returned something wrong");
-    }
-    //Suppressed because of the same reason as in UserMVCTest
-    @SuppressWarnings("unused")
-    static class ContactProjection{
-        public String id;
-        public String name;
-        public String number;
-        public ContactProjection(){
-        }
-        public ContactProjection(String id, String name, String number){
-            this.id = id;
-            this.name = name;
-            this.number = number;
-        }
+        mockMvc.perform(post(contactUri));
+        mockMvc
+                .perform(get(userLocation + "/contacts?searchQuery=89992416424"))
+                .andExpect(jsonPath("$[0].name", is("Granny")))
+                .andExpect(jsonPath("$[0].number", is("89992416424")));
     }
 }

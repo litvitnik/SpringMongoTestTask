@@ -79,7 +79,7 @@ class UserMVCTest {
                 .andExpect(content().json("{'name':'VeryVeryTestUser'}"))
                 .andExpect(jsonPath("$.id", notNullValue()));
     }
-    
+
     @Test
     public void getAllUsers() throws Exception {
         String postUri = "/users?name=VeryVeryTestUser";
@@ -116,7 +116,8 @@ class UserMVCTest {
         String location = mvcResult.getResponse().getHeader("Location");
         mockMvc
                 .perform(get(location))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("VeryVeryTestUser")));
     }
 
     @Test
