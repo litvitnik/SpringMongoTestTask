@@ -2,10 +2,20 @@
 ### Инструменты
 - Java 11
 - Maven
-- Spring Boot/Web/Data/Test
+- Spring Boot/Web/Data/Test/Actuator
+- JUnit 5
 - MongoDB
 - Jackson Core
-- JUnit 5
+
+### Запуск
+TesttaskApplication -> Run
+
+Корень контекста и порт указаны в пропертях
+
+База находится в облаке, все должно работать из коробки
+
+Корневой адрес:
+**localhost:8189/api/**
 
 ### Архитектура
 Проект традиционно разбит на три слоя - Контроллер, Сервис и Репозиторий

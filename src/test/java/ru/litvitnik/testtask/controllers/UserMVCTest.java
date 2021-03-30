@@ -57,7 +57,7 @@ class UserMVCTest {
     public void deleteUser() throws Exception{
         String postUri = "/users?name=VeryVeryTestUser";
         MvcResult mvcResult = mockMvc
-                .perform(post(postUri).contentType(MediaType.APPLICATION_JSON_VALUE))
+                .perform(post(postUri))
                 .andReturn();
         String location = mvcResult.getResponse().getHeader("Location");
         assertNotNull(location, "post is not working properly so im failed");
